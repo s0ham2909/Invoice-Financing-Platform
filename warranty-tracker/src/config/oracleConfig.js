@@ -5,7 +5,7 @@ import platformPriceOracleAbi from "./platformPriceOracleAbi.json";
 // ============================================================
 
 // PlatformPriceOracle contract address (updated on deployment)
-export const PLATFORM_PRICE_ORACLE_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const PLATFORM_PRICE_ORACLE_ADDRESS = "0x6a6f2d0B3Fe78da7bC2b2749AB76663e2A934004";
 
 // Fallback Chainlink Aggregator addresses on Sepolia (used for direct fallback reads before or alongside oracle)
 export const CHAINLINK_SEPOLIA_FEEDS = {

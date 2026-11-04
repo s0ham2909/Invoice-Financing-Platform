@@ -1,0 +1,28 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x5Fa4098c965eECc3001EDC6c880eFcaE077aC647",
+  "deployedAt": "2026-11-04T07:15:00.000Z",
+  "PlatformPriceOracle": {
+    "address": "0x6a6f2d0B3Fe78da7bC2b2749AB76663e2A934004",
+    "txHash": "0xa3c917de5878d15956f38bf096e6b73118f4fb1f97c06f7437e1fdfb868741b4",
+    "etherscan": "https://sepolia.etherscan.io/address/0x6a6f2d0B3Fe78da7bC2b2749AB76663e2A934004",
+    "feeds": {
+      "ETH/USD": {
+        "address": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+        "maxAge": 4500,
+        "heartbeat": 3600
+      },
+      "BTC/USD": {
+        "address": "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43",
+        "maxAge": 4500,
+        "heartbeat": 3600
+      },
+      "USDC/USD": {
+        "address": "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
+        "maxAge": 108000,
+        "heartbeat": 86400
+      }
+    }
+  }
+}
