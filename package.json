@@ -1,0 +1,25 @@
+{
+  "name": "cbd-invoice-financing-platform",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "preflight": "hardhat run scripts/preflight.js --network sepolia",
+    "deploy:sepolia": "hardhat run scripts/deploy_exp5.js --network sepolia",
+    "deploy:sepolia:demo": "cross-env LAB_DEMO_MODE=true hardhat run scripts/deploy_exp5.js --network sepolia",
+    "smoke:sepolia": "hardhat run scripts/smoke_test.js --network sepolia",
+    "gate:dex": "hardhat run scripts/dex_gate_and_deploy.js --network hardhat",
+    "deploy:dex": "hardhat run scripts/deploy_dex.js --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "cross-env": "^7.0.3",
+    "hardhat": "^2.29.1"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "1.5.0",
+    "dotenv": "^18.0.9"
+  }
+}

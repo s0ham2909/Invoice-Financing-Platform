@@ -1,0 +1,43 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x6e5e55388fA5fde92293FC17F15cf5d89daF5755",
+  "updatedAt": "2026-10-22T20:34:02.115Z",
+  "contracts": {
+    "DexFactory": {
+      "address": "0x17e54a6428dCf74fDA543DcDbf3949762836Fa8b",
+      "args": []
+    },
+    "DexRouter": {
+      "address": "0xAd1D256C1dd832485e11e014141b80ADDcf41440",
+      "factory": "0x17e54a6428dCf74fDA543DcDbf3949762836Fa8b",
+      "args": [
+        "0x17e54a6428dCf74fDA543DcDbf3949762836Fa8b"
+      ]
+    },
+    "PairINVX_mUSDC": {
+      "address": "0x2Fe73871303b16A11FA0fd75DFB8306CAFb2BE48",
+      "token0": "0xb87fF8Dd0B49d578D20df8887f67303A6c95e62e",
+      "token1": "0xc2b51d72E701013F2107F77a7eDFB74735332739"
+    }
+  },
+  "transactions": {
+    "DexFactoryDeploy": {
+      "hash": "0xc3b4be5083232a8fa94bd22e1fa44faba7798d44ddbe25b156eca019e9a05fb2",
+      "gasUsed": "13252179"
+    },
+    "DexRouterDeploy": {
+      "hash": "0x19a795d5b037bb79e355f7bf869fea4b53eddde5f322c59bf6077743e9591cd0",
+      "gasUsed": "10101232"
+    },
+    "CreatePair_INVX_mUSDC": {
+      "hash": "0x2490363c1fa995204bc2b5fc7dbe185889273dcce0e047a08e654d2af6ac0f29",
+      "blockNumber": 11971947,
+      "gasUsed": "11467185"
+    }
+  },
+  "gasUsed": {
+    "CreatePair_INVX_mUSDC": "11467185"
+  },
+  "totalGasUsed": "34820596"
+}

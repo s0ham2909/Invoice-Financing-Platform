@@ -1,0 +1,100 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x5Fa4098c965eECc3001EDC6c880eFcaE077aC647",
+  "timestamp": "2026-10-22T19:37:32.877Z",
+  "contracts": {
+    "InvoiceVault": {
+      "address": "0x81289DBECab824C8db0d5193e2D6a8d8276A1456",
+      "explorer": "https://sepolia.etherscan.io/address/0x81289DBECab824C8db0d5193e2D6a8d8276A1456",
+      "args": [
+        "0xb87fF8Dd0B49d578D20df8887f67303A6c95e62e"
+      ]
+    },
+    "INVX": {
+      "address": "0xc2b51d72E701013F2107F77a7eDFB74735332739",
+      "explorer": "https://sepolia.etherscan.io/address/0xc2b51d72E701013F2107F77a7eDFB74735332739",
+      "args": []
+    },
+    "ReserveStaking": {
+      "address": "0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24",
+      "explorer": "https://sepolia.etherscan.io/address/0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24",
+      "args": [
+        "0xc2b51d72E701013F2107F77a7eDFB74735332739",
+        "0xb87fF8Dd0B49d578D20df8887f67303A6c95e62e"
+      ]
+    },
+    "InvoiceFarm": {
+      "address": "0x5a2268E7e3ae8E83190422d508237f3A6fBEfa78",
+      "explorer": "https://sepolia.etherscan.io/address/0x5a2268E7e3ae8E83190422d508237f3A6fBEfa78",
+      "args": [
+        "0x81289DBECab824C8db0d5193e2D6a8d8276A1456",
+        "0xc2b51d72E701013F2107F77a7eDFB74735332739"
+      ]
+    },
+    "FeeRouter": {
+      "address": "0x1cBABbD581f4fe4566B22a21CF33D35e17b8b268",
+      "explorer": "https://sepolia.etherscan.io/address/0x1cBABbD581f4fe4566B22a21CF33D35e17b8b268",
+      "args": [
+        "0xb87fF8Dd0B49d578D20df8887f67303A6c95e62e",
+        "0x81289DBECab824C8db0d5193e2D6a8d8276A1456",
+        "0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24",
+        "0x5Fa4098c965eECc3001EDC6c880eFcaE077aC647"
+      ]
+    },
+    "TierGate": {
+      "address": "0x6136516ce353dbAa62B1c1B63F6b41b502D6cCc8",
+      "explorer": "https://sepolia.etherscan.io/address/0x6136516ce353dbAa62B1c1B63F6b41b502D6cCc8",
+      "args": [
+        "0x8260d0fe7b2c2302939C29155B67db619a933a99",
+        "0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24"
+      ]
+    }
+  },
+  "transactions": {
+    "InvoiceVaultDeploy": {
+      "hash": "0x14262db73f3696abb16bab48ae6227e3b1f126bda59fc764cfe38738fc67276f",
+      "explorer": "https://sepolia.etherscan.io/tx/0x14262db73f3696abb16bab48ae6227e3b1f126bda59fc764cfe38738fc67276f"
+    },
+    "INVXDeploy": {
+      "hash": "0x8281ae3e19e34626fb9d2d6de1de8083404ed5e9dea45cecae4502e981f26572",
+      "explorer": "https://sepolia.etherscan.io/tx/0x8281ae3e19e34626fb9d2d6de1de8083404ed5e9dea45cecae4502e981f26572"
+    },
+    "ReserveStakingDeploy": {
+      "hash": "0xf8bbefeaf4f29b2adf8ea916f36885ee3a6673593b3e0cb0140885769d3014bd",
+      "explorer": "https://sepolia.etherscan.io/tx/0xf8bbefeaf4f29b2adf8ea916f36885ee3a6673593b3e0cb0140885769d3014bd"
+    },
+    "InvoiceFarmDeploy": {
+      "hash": "0x4fc6a59d1351319d75a34c222073b62f49bd8ade99923e9260a430d58fb8d454",
+      "explorer": "https://sepolia.etherscan.io/tx/0x4fc6a59d1351319d75a34c222073b62f49bd8ade99923e9260a430d58fb8d454"
+    },
+    "FeeRouterDeploy": {
+      "hash": "0x280be88486ebefc7201c17375a70956fd84bf30dd19a2cb107a0da95c9dd72a4",
+      "explorer": "https://sepolia.etherscan.io/tx/0x280be88486ebefc7201c17375a70956fd84bf30dd19a2cb107a0da95c9dd72a4"
+    },
+    "TierGateDeploy": {
+      "hash": "0x6c52672e50f81c02e6cb1df50ddd5b53c3e728d86f8ac037bb43a0d6d36ef400",
+      "explorer": "https://sepolia.etherscan.io/tx/0x6c52672e50f81c02e6cb1df50ddd5b53c3e728d86f8ac037bb43a0d6d36ef400"
+    },
+    "AuthorizeFeeRouter": {
+      "hash": "0xe7275c586ddeb361859a9fb1563c044e4e8f34d1d1b9c5a19a70c76b90357943",
+      "explorer": "https://sepolia.etherscan.io/tx/0xe7275c586ddeb361859a9fb1563c044e4e8f34d1d1b9c5a19a70c76b90357943"
+    },
+    "AuthorizeTierGate": {
+      "hash": "0xac158166fd8f8ed57d803acf8c7cb15a6da2a36034e3fddf403250df0972fd92",
+      "explorer": "https://sepolia.etherscan.io/tx/0xac158166fd8f8ed57d803acf8c7cb15a6da2a36034e3fddf403250df0972fd92"
+    },
+    "FundInvoiceFarm": {
+      "hash": "0x8c35007c05fd70ba2118d5e701610849a5ff176c11cea6794c213f727bae7a9b",
+      "explorer": "https://sepolia.etherscan.io/tx/0x8c35007c05fd70ba2118d5e701610849a5ff176c11cea6794c213f727bae7a9b"
+    },
+    "NotifyFarmRewards": {
+      "hash": "0xca0eab557c41b09c4ddf703280304f043232e84439115426ebb73d71f94d4ca4",
+      "explorer": "https://sepolia.etherscan.io/tx/0xca0eab557c41b09c4ddf703280304f043232e84439115426ebb73d71f94d4ca4"
+    },
+    "SetUtilizationIncentive": {
+      "hash": "0x8243f774faca706a23de12aa5e3f43d47624989ae6feb6953716ad0b825e44ef",
+      "explorer": "https://sepolia.etherscan.io/tx/0x8243f774faca706a23de12aa5e3f43d47624989ae6feb6953716ad0b825e44ef"
+    }
+  }
+}
