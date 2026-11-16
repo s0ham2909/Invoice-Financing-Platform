@@ -22,7 +22,7 @@ export default function WarrantyCard({ tokenId, warranty, account, contract, onT
     try {
       const valid = await contract.checkValidity(BigInt(tokenId));
       setValidityResult(valid);
-    } catch (err) {
+    } catch {
       setValidityResult(false);
     } finally {
       setChecking(false);

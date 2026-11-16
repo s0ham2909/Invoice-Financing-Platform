@@ -15,6 +15,7 @@ interface IInvoiceNFTCore {
     }
     function getInvoice(uint256 tokenId) external view returns (Invoice memory);
     function financeInvoice(uint256 tokenId) external payable;
+    function isRepaid(uint256 tokenId) external view returns (bool);
 }
 
 interface IReserveStakingHook {
@@ -169,6 +170,7 @@ contract TierGate is Ownable, ReentrancyGuard {
         // Ensure caller is the supplier or owner
         require(msg.sender == supplier || msg.sender == owner(), "Unauthorized settlement");
 
+        require(invoiceNFT.isRepaid(tokenId), "Invoice not repaid");
         // Clear local lock record
         delete lockedInvoices[tokenId];
 

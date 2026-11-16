@@ -6,12 +6,12 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IInvoiceNFT {
     struct Invoice {
-        string  invoiceNumber;
-        uint256 amount;
-        uint256 dueDate;
+        string invoiceNumber;
         address borrower;
+        uint96 amount;
         address investor;
-        bool    isFinanced;
+        uint64 dueDate;
+        bool isFinanced;
     }
     function getInvoice(uint256 tokenId) external view returns (Invoice memory);
     function totalMinted() external view returns (uint256);
@@ -41,7 +41,7 @@ contract InvoiceLiquidityPool is ERC20, ReentrancyGuard {
 
     IInvoiceNFT public immutable invoiceContract;
 
-    /// @notice Total ETH currently sitting idle in pool (available + returned repayments)
+    /// @notice Total pool assets: idle ETH plus outstanding principal receivables.
     uint256 public totalPoolETH;
 
     /// @notice ETH actively lent out to suppliers (not yet repaid)
@@ -203,7 +203,7 @@ contract InvoiceLiquidityPool is ERC20, ReentrancyGuard {
 
         uint256 interest = loan.repayAmount - loan.principal;
         // Full repayment (principal + interest) flows back into pool
-        totalPoolETH += loan.repayAmount;
+        totalPoolETH += interest; // Principal was already included as an outstanding receivable.
 
         // Refund any overpayment
         if (msg.value > loan.repayAmount) {

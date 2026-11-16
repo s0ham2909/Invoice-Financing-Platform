@@ -19,7 +19,7 @@ import {
 import { useOraclePrice } from "../hooks/useOraclePrice";
 
 export default function VaultDashboard({ signer, account }) {
-  const [vaultAddress, setVaultAddress] = useState(INVOICE_VAULT_ADDRESS || "");
+  const [vaultAddress] = useState(INVOICE_VAULT_ADDRESS || "");
   const [vaultContract, setVaultContract] = useState(null);
   const [assetAddress, setAssetAddress] = useState("");
   const [assetDecimals, setAssetDecimals] = useState(6); // Default 6 for mUSDC
@@ -60,7 +60,7 @@ export default function VaultDashboard({ signer, account }) {
   // Reserve Staking & Portfolio States (Experiment 5: Part 2 Protocol Staking)
   const [stakingContract, setStakingContract] = useState(null);
   const [invxContract, setInvxContract] = useState(null);
-  const [invxBalance, setInvxBalance] = useState("0");
+  const [, setInvxBalance] = useState("0");
   const [stakedInvxBalance, setStakedInvxBalance] = useState("0");
   const [earnedUsdcYield, setEarnedUsdcYield] = useState("0");
   const [stakeInvxInput, setStakeInvxInput] = useState("");
@@ -443,7 +443,7 @@ export default function VaultDashboard({ signer, account }) {
       setDepositAndFarmStep(2);
       setStatus("Step 2/4: Depositing into Vault to mint vINV shares...");
       const tx2 = await vaultContract.deposit(parsedAssets, account);
-      const receipt2 = await tx2.wait();
+      await tx2.wait();
 
       // Estimate shares received
       const mintedShares = await vaultContract.convertToShares(parsedAssets);
@@ -492,23 +492,6 @@ export default function VaultDashboard({ signer, account }) {
     }
   };
 
-  const handleWithdrawFarm = async () => {
-    if (!farmContract || !farmedBalance || parseFloat(farmedBalance) <= 0) return;
-    try {
-      setLoading(true);
-      setStatus("Withdrawing staked vINV from farm...");
-      const parsed = ethers.parseUnits(farmedBalance, vaultDecimals);
-      const tx = await farmContract.withdraw(parsed);
-      await tx.wait();
-      setStatus("Successfully unstaked vINV from farm.");
-      await refreshAllData();
-    } catch (err) {
-      console.error(err);
-      setStatus(`Withdraw Failed: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // ─── Reserve Staking (INVX -> mUSDC Yield) ─────────────────────────────────
   const handleStakeInvx = async () => {

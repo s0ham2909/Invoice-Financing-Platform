@@ -75,6 +75,9 @@ contract ReserveStaking is Ownable, ReentrancyGuard {
 
     /// @notice Authorized contracts allowed to lock/unlock supplier stakes (e.g. TierGate, InvoiceLiquidityPool, FeeRouter)
     mapping(address => bool) public isAuthorizedLocker;
+    bool public collateralAdminSealed;
+    /// @notice Permanently close collateral permissions after authorizing InvoiceNFT and PlatformConfig.
+    function sealCollateralAdmin() external onlyOwner { collateralAdminSealed = true; }
 
     /// @notice Backward-compatible single getter
     address public authorizedLocker;
@@ -126,7 +129,7 @@ contract ReserveStaking is Ownable, ReentrancyGuard {
     }
 
     modifier onlyAuthorized() {
-        if (!isAuthorizedLocker[msg.sender] && msg.sender != authorizedLocker && msg.sender != owner()) {
+        if (!isAuthorizedLocker[msg.sender] && msg.sender != authorizedLocker && (msg.sender != owner() || collateralAdminSealed)) {
             revert Unauthorized();
         }
         _;
@@ -325,17 +328,47 @@ contract ReserveStaking is Ownable, ReentrancyGuard {
         emit StakeUnlocked(supplier);
     }
 
+    event SupplierStakeSlashed(address indexed supplier, uint256 amount, address indexed recipient);
+    error CannotSlashMoreThanStaked(uint256 requested, uint256 available);
+
+    /**
+     * @notice Slashes staked tokens of a defaulting supplier without relying on debtor approval.
+     * @dev Only callable by authorized contract (e.g. Governance / PlatformConfig) or owner.
+     *      Transfers the slashed tokens directly to the recipient (e.g. insurance reserve).
+     */
+    function slashSupplierStake(address supplier, uint256 slashAmount, address recipient)
+        external
+        onlyAuthorized
+        updateReward(supplier)
+        nonReentrant
+    {
+        if (slashAmount > stakedBalance[supplier]) {
+            revert CannotSlashMoreThanStaked(slashAmount, stakedBalance[supplier]);
+        }
+        stakedBalance[supplier] -= slashAmount;
+        totalStaked -= slashAmount;
+
+        if (lockedStake[supplier] > stakedBalance[supplier]) {
+            lockedStake[supplier] = stakedBalance[supplier];
+        }
+
+        stakingToken.safeTransfer(recipient, slashAmount);
+        emit SupplierStakeSlashed(supplier, slashAmount, recipient);
+    }
+
     // ──────────────────────────────────────────────
     //  Admin Configuration
     // ──────────────────────────────────────────────
 
     function setAuthorizedLocker(address _locker) external onlyOwner {
+        if (collateralAdminSealed) revert Unauthorized();
         authorizedLocker = _locker;
         isAuthorizedLocker[_locker] = true;
         emit AuthorizedLockerUpdated(_locker, true);
     }
 
     function setAuthorizedLockerStatus(address _locker, bool _authorized) external onlyOwner {
+        if (collateralAdminSealed) revert Unauthorized();
         isAuthorizedLocker[_locker] = _authorized;
         if (!_authorized && authorizedLocker == _locker) {
             authorizedLocker = address(0);

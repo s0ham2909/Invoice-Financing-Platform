@@ -389,7 +389,9 @@ describe("DeFi Experiment 5: Yield Farming + Staking & Invoice Platform Integrat
       await reserveStaking.connect(supplier).unstake(parseINVX(500));
       expect(await reserveStaking.stakedBalance(supplier.address)).to.equal(parseINVX(1000));
 
-      // Settle repayment & unlock supplier stake
+      // A settlement assertion alone is not payment. The underlying invoice must actually be repaid.
+      await expect(tierGate.connect(supplier).settleRepaymentAndUnlock(0)).to.be.revertedWith("Invoice not repaid");
+      await invoiceNFT.connect(supplier).repayInvoice(0, { value: invoiceAmount });
       await tierGate.connect(supplier).settleRepaymentAndUnlock(0);
 
       // Locked stake is now 0!

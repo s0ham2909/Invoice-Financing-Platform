@@ -6,7 +6,7 @@ import OracleHealthBadge from "./OracleHealthBadge";
 import { isLoggedIn } from "../utils/auth";
 
 export default function Navbar() {
-  const { account, connectionType, loading, connectMetaMask, connectWalletConnect, disconnect } = useWallet();
+  const { account, chainId, connectionType, loading, connectMetaMask, connectWalletConnect, disconnect } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -33,17 +33,17 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="flex items-center justify-between px-6 py-4 bg-gray-900 text-white shadow-lg">
+      <nav className="flex flex-wrap gap-3 items-center justify-between px-4 md:px-6 py-4 bg-gray-900 text-white shadow-lg">
         <h1
-          className="text-xl font-bold tracking-wide cursor-pointer flex items-center gap-2"
+          className="text-base md:text-xl font-bold tracking-wide cursor-pointer flex items-center gap-2"
           onClick={() => navigate("/")}
         >
           📄 Invoice Financing Platform
         </h1>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap min-w-0 items-center gap-2 md:gap-4">
           {/* Chainlink Oracle Health Badge (Experiment 7) */}
-          <OracleHealthBadge />
+          {chainId === 11155111 && <OracleHealthBadge />}
 
           {isLoggedIn() && <LogoutButton />}
 

@@ -1,3 +1,7 @@
+## DAO governance module
+
+The completed, simplified DAO supports binding financing-fee changes and collateral default penalties in its own invoice workspace. See [DAO launch and demonstration guide](docs/DAO_QUICKSTART.md) for exact PowerShell commands, MetaMask setup, three-wallet walkthrough, and optional Sepolia deployment. Older Sepolia experiments remain separate.
+
 # Invoice Financing Platform — DeFi Experiments 1-7
 
 A full-stack DeFi invoice financing platform built through 7 progressive experiments, featuring ERC-4626 vaults, yield farming, protocol staking, DEX AMM, Chainlink oracle integration, and a React frontend.

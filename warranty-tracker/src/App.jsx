@@ -5,32 +5,31 @@ import CustomerDashboard from "./components/CustomerDashboard";
 import InvoiceFinancing from "./components/InvoiceFinancing";
 import VaultDashboard from "./components/VaultDashboard";
 import AmmDashboard from "./components/AmmDashboard";
+import GovernanceDashboard from "./components/governance/GovernanceDashboard";
 import { getContract } from "./utils/web3";
 import { useWallet } from "./context/WalletContext";
 
 function App() {
-  const { account, signer, connectMetaMask } = useWallet();
+  const { account, signer, chainId, switchNetwork, connectMetaMask } = useWallet();
   const [contract, setContract] = useState(null);
-  const [activeTab, setActiveTab] = useState("invoice");
+  const [activeTab, setActiveTab] = useState("governance");
   const [isOwner, setIsOwner] = useState(false);
 
   // Initialize contract when signer is ready
   useEffect(() => {
-    if (!account || !signer) {
-      setContract(null);
-      setIsOwner(false);
-      return;
-    }
+    if (!account || !signer || chainId !== 11155111) return;
+    let cancelled = false;
 
     const init = async () => {
       try {
         const contractInstance = await getContract(signer);
+        if (cancelled) return;
         setContract(contractInstance);
 
         // Check if connected wallet is contract owner
         try {
           const owner = await contractInstance.owner();
-          setIsOwner(owner.toLowerCase() === account.toLowerCase());
+          if (!cancelled) setIsOwner(owner.toLowerCase() === account.toLowerCase());
         } catch {
           setIsOwner(false);
         }
@@ -40,7 +39,8 @@ function App() {
     };
 
     init();
-  }, [account, signer]);
+    return () => { cancelled = true; };
+  }, [account, signer, chainId]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -65,6 +65,7 @@ function App() {
         <>
           {/* Tab navigation */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
+            <button onClick={() => setActiveTab("governance")} className={`px-5 py-2 rounded-lg font-medium ${activeTab === "governance" ? "bg-indigo-600 text-white" : "bg-white border"}`}>DAO Governance</button>
             <button
               onClick={() => setActiveTab("invoice")}
               className={`px-5 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
@@ -121,13 +122,15 @@ function App() {
 
           {/* Dashboard content */}
           <div className="pb-12">
-            {activeTab === "amm" && <AmmDashboard signer={signer} account={account} />}
-            {activeTab === "invoice" && <InvoiceFinancing />}
-            {activeTab === "vault" && <VaultDashboard signer={signer} account={account} />}
-            {activeTab === "manufacturer" && isOwner && contract && (
+            {activeTab === "governance" && <GovernanceDashboard />}
+            {activeTab !== "governance" && chainId !== 11155111 && <div className="max-w-xl mx-auto p-8 space-y-3"><p>The earlier platform experiments use Sepolia. DAO invoices are available under DAO Governance → Invoices &amp; collateral.</p><button className="bg-indigo-600 text-white rounded p-3" onClick={() => switchNetwork(11155111).catch(err => window.alert(err.message))}>Switch to Sepolia for earlier experiments</button></div>}
+            {activeTab === "amm" && chainId === 11155111 && <AmmDashboard signer={signer} account={account} />}
+            {activeTab === "invoice" && chainId === 11155111 && <InvoiceFinancing />}
+            {activeTab === "vault" && chainId === 11155111 && <VaultDashboard signer={signer} account={account} />}
+            {activeTab === "manufacturer" && chainId === 11155111 && isOwner && contract && (
               <ManufacturerDashboard contract={contract} />
             )}
-            {activeTab === "customer" && contract && (
+            {activeTab === "customer" && chainId === 11155111 && contract && (
               <CustomerDashboard account={account} contract={contract} />
             )}
           </div>

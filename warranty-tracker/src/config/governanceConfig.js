@@ -1,0 +1,14 @@
+import deployment from "./governanceDeployment.json";
+import dtestAbi from "./dtestAbi.json";
+import governanceAbi from "./governanceAbi.json";
+import platformConfigAbi from "./platformConfigAbi.json";
+export const GOVERNANCE_DEPLOYMENT = deployment;
+export const GOVERNANCE_CHAIN_ID = deployment.chainId;
+export const DTEST_ADDRESS = deployment.DTEST;
+export const GOVERNANCE_ADDRESS = deployment.Governance;
+export const PLATFORM_CONFIG_ADDRESS = deployment.PlatformConfig;
+export const DTEST_ABI = dtestAbi;
+export const GOVERNANCE_ABI = governanceAbi;
+export const PLATFORM_CONFIG_ABI = platformConfigAbi;
+export const PROPOSAL_TYPES = { 0: "Default penalty", 1: "Platform fee" };
+export const PROPOSAL_STATES = { 0: "Pending", 1: "Active", 2: "Defeated", 3: "Succeeded", 4: "Queued", 5: "Executed", 6: "Cancelled", 7: "Expired" };

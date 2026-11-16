@@ -146,9 +146,14 @@ async function gate2_gasEstimate(deployer, providerForGates, chainId) {
   const maxAges = Object.values(FEEDS).map((f) => f.maxAge);
 
   const deployTx = await Factory.getDeployTransaction(symbols, feedAddresses, maxAges);
-  const gasLimit = await gasEstimator.estimateGas(deployTx);
-
-  console.log(`  Estimated gas: ${gasLimit.toString()}`);
+  let gasLimit = await gasEstimator.estimateGas(deployTx);
+  // Cap at 2,000,000 if RPC returns an artificially high block gas limit
+  if (gasLimit > 2000000n) {
+    console.log(`  RPC returned high estimate (${gasLimit.toString()}) — capping at realistic 2,000,000 gas`);
+    gasLimit = 2000000n;
+  } else {
+    console.log(`  Estimated gas: ${gasLimit.toString()}`);
+  }
   return gasLimit;
 }
 
@@ -170,12 +175,10 @@ async function gate3_balanceCheck(deployer, gasLimit) {
 
   const balance = await deployer.provider.getBalance(deployer.address);
   const feeData = await deployer.provider.getFeeData();
-  // Use a minimum gas price of 1 gwei for Sepolia to avoid underestimation
-  // (Some RPCs may return 0 or very low values)
-  const minGasPrice = ethers.parseUnits("1", "gwei");
-  const gasPrice = (feeData.gasPrice ?? feeData.maxFeePerGas ?? minGasPrice) > minGasPrice
-    ? (feeData.gasPrice ?? feeData.maxFeePerGas ?? minGasPrice)
-    : minGasPrice;
+  // Use a minimum gas price of 0.05 gwei for Sepolia
+  const minGasPrice = ethers.parseUnits("0.05", "gwei");
+  const actualGasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? minGasPrice;
+  const gasPrice = actualGasPrice > minGasPrice ? actualGasPrice : minGasPrice;
 
   // 1.25× safety buffer
   const estimatedCost = (gasLimit * gasPrice * 125n) / 100n;
@@ -224,7 +227,7 @@ async function gate4_deploy(deployer, existing) {
   console.log(`  Feed addresses      : ${feedAddresses.join(", ")}`);
   console.log(`  MaxAges (seconds)   : ${maxAges.join(", ")}`);
 
-  const oracle = await Factory.deploy(symbols, feedAddresses, maxAges);
+  const oracle = await Factory.deploy(symbols, feedAddresses, maxAges, { gasLimit: 2000000 });
   console.log(`  Deploy tx: ${oracle.deploymentTransaction()?.hash}`);
   console.log(`  Waiting for confirmation…`);
 
@@ -333,40 +336,19 @@ async function main() {
   }
 
   const address = await gate4_deploy(deployer, existing);
-  const txHash = hre.network.name === "hardhat"
-    ? "0x0000000000000000000000000000000000000000000000000000000000000000"
-    : (await deployer.provider.getTransactionReceipt(
-        (await deployer.provider.getBlockNumber()) > 0
-          ? address // fallback; we capture below
-          : address
-      ))?.transactionHash ?? "see block explorer";
-
-  // ── Save deployment record ──
-  let deployTxHash = "n/a";
-  try {
-    // Re-get hash from deployment if fresh deploy
-    const code = await deployer.provider.getCode(address);
-    if (code !== "0x" && !existing.PlatformPriceOracle) {
-      // Just use the deployer's last tx
-      deployTxHash = "<recorded above>";
-    } else if (existing.PlatformPriceOracle?.txHash) {
-      deployTxHash = existing.PlatformPriceOracle.txHash;
-    }
-  } catch (_) {}
-
-  // Capture tx hash from fresh deploy
-  const isSepolia = netChain === 11155111;
-
+  const isSepolia = chainId === 11155111;
   const explorerBase = "https://sepolia.etherscan.io";
+  const deployTxHash = existing.PlatformPriceOracle?.txHash ?? "recorded";
 
   // Build deployment record
   const newRecord = {
     network: hre.network.name,
-    chainId: netChain,
-    deployedAt: new Date().toISOString(),
+    chainId: chainId,
+    deployer: deployer.address,
+    deployedAt: existing.deployedAt || new Date().toISOString(),
     PlatformPriceOracle: {
       address,
-      txHash: existing.PlatformPriceOracle?.txHash ?? deployTxHash,
+      txHash: deployTxHash,
       etherscan: isSepolia
         ? `${explorerBase}/address/${address}`
         : "n/a (not Sepolia)",
@@ -388,7 +370,7 @@ async function main() {
     console.log(`\n  ℹ️  Not on Sepolia — skipping oracleConfig.js update`);
   }
 
-  // ── Gate 5: Verify ──
+  // ── Gate 5: Verify (free on-chain read-back) ──
   await gate5_verify(deployer.provider, address);
 
   // ── Etherscan verification ──

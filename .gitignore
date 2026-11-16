@@ -12,3 +12,4 @@ cache/
 
 # Deployments log / temp files
 deployments/temp/
+test-results/

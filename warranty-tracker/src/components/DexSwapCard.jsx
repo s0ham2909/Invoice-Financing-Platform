@@ -242,13 +242,13 @@ export default function DexSwapCard({
 
         // Estimate price impact compared to first hop reserves
         try {
-          const [rIn, rOut] = await router.getReserves(path[0], path[1]);
+          const [rIn] = await router.getReserves(path[0], path[1]);
           const inPct = (Number((parsedIn * 10000n) / (rIn + parsedIn)) / 100).toFixed(2);
           setPriceImpactPct(parseFloat(inPct));
         } catch {
           setPriceImpactPct(null);
         }
-      } catch (err) {
+      } catch {
         if (!isCancelled) {
           setToAmount("");
           setMinReceived("");

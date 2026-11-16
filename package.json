@@ -10,13 +10,20 @@
     "deploy:sepolia:demo": "cross-env LAB_DEMO_MODE=true hardhat run scripts/deploy_exp5.js --network sepolia",
     "smoke:sepolia": "hardhat run scripts/smoke_test.js --network sepolia",
     "gate:dex": "hardhat run scripts/dex_gate_and_deploy.js --network hardhat",
-    "deploy:dex": "hardhat run scripts/deploy_dex.js --network sepolia"
+    "deploy:dex": "hardhat run scripts/deploy_dex.js --network sepolia",
+    "gate:oracle": "hardhat run scripts/deploy_oracle.js --network hardhat",
+    "deploy:oracle": "hardhat run scripts/deploy_oracle.js --network sepolia",
+    "deploy:gov": "hardhat run scripts/deploy_governance.js --network localhost",
+    "node:local": "cross-env LOCAL_DEMO_MINING=true hardhat node --hostname 127.0.0.1",
+    "deploy:gov:sepolia": "hardhat run scripts/deploy_governance.js --network sepolia",
+    "demo:default": "hardhat run scripts/governance_advance.js --network localhost"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.0.2",
     "cross-env": "^7.0.3",
-    "hardhat": "^2.29.1"
+    "hardhat": "^2.29.1",
+    "solc": "0.8.26"
   },
   "dependencies": {
     "@chainlink/contracts": "1.5.0",
