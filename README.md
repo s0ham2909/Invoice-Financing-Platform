@@ -1,267 +1,265 @@
-## DAO governance module
+# Invoice Financing Platform
 
-The completed, simplified DAO supports binding financing-fee changes and collateral default penalties in its own invoice workspace. See [DAO launch and demonstration guide](docs/DAO_QUICKSTART.md) for exact PowerShell commands, MetaMask setup, three-wallet walkthrough, and optional Sepolia deployment. Older Sepolia experiments remain separate.
+A full-stack DeFi platform for invoice financing — combining ERC-4626 vaults, yield farming, protocol staking, a Uniswap v2-style DEX, Chainlink price oracle integration, and a DAO governance module. Built with Solidity, Hardhat, React 18, and Ethers v6.
 
-# Invoice Financing Platform — DeFi Experiments 1-7
+---
 
-A full-stack DeFi invoice financing platform built through 7 progressive experiments, featuring ERC-4626 vaults, yield farming, protocol staking, DEX AMM, Chainlink oracle integration, and a React frontend.
+## 🎯 What This Platform Does
 
-## 🏗️ Architecture Overview
+### Invoice Lifecycle & Financing
+- **Tokenize invoices as NFTs** — ERC-721 with metadata (invoice number, amount, due date, borrower)
+- **Three financing paths** — direct P2P investor, shared liquidity pool, or USD-denominated minting
+- **Automated repayment** — principal + 5% interest returned to investors/pool
+- **Supplier credit tiers** — Bronze/Silver/Gold based on INVX staked; fee discounts (0%/1%/2.5%) and financing caps enforced on-chain
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        INVOICE FINANCING PLATFORM                       │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐ │
-│  │   Smart Contracts │    │   Frontend       │    │   Deployment     │ │
-│  │   (Hardhat/Sol)   │    │   (React+Vite)   │    │   (Sepolia)      │ │
-│  └────────┬──────────┘    └────────┬─────────┘    └────────┬─────────┘ │
-│           │                        │                        │           │
-│  ┌────────┴──────────┐    ┌────────┴─────────┐    ┌────────┴─────────┐ │
-│  │ • InvoiceNFT      │    │ • InvoiceFinancing│    │ • 8 contracts    │ │
-│  │ • InvoiceVault    │    │   (Supplier/      │    │   deployed       │ │
-│  │   (ERC-4626)      │    │   Investor/Pool)  │    │ • Oracle not     │ │
-│  │ • InvoiceFarm     │    │ • VaultDashboard  │    │   yet deployed   │ │
-│  │ • ReserveStaking  │    │ • OracleHealth    │    │   (needs 0.012   │ │
-│  │ • TierGate        │    │   Badge           │    │   ETH)           │ │
-│  │ • FeeRouter       │    │ • DEX Swap        │    │                  │ │
-│  │ • DEX (Factory/   │    │ • Wallet Connect  │    │                  │ │
-│  │   Router/Pair)    │    │                   │    │                  │ │
-│  │ • PlatformPrice   │    │                   │    │                  │ │
-│  │   Oracle (Exp 7)  │    │                   │    │                  │ │
-│  └───────────────────┘    └───────────────────┘    └──────────────────┘ │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+### Vault & Yield
+- **ERC-4626 compliant vault** — deposit mUSDC, receive yield-bearing vINV shares
+- **Dynamic decimals** — automatically reads `asset.decimals()` and `vault.decimals()` for precision
+- **Share price resilience** — idle cash tracking prevents dilution when funds allocated to invoices
+- **Yield farming** — stake vINV in InvoiceFarm to earn INVX rewards (utilization-aware emissions)
+- **Protocol staking** — stake INVX in ReserveStaking to earn mUSDC yield (20% of platform fees)
+- **Fee router** — automatic 70/20/10 split (Vault / ReserveStaking / Insurance Reserve)
 
-## 📦 Contracts (Solidity ^0.8.24)
+### DEX & Liquidity
+- **Uniswap v2 AMM** — factory, router, and pair contracts with CREATE2 deterministic addresses
+- **Full swap suite** — single-hop, multi-hop, add/remove liquidity, slippage guards, deadlines
+- **Mixed-decimal support** — 6 decimals (mUSDC) and 18 decimals (INVX) with perfect precision
+- **INVX/mUSDC pair** — deployed and verified for trading and liquidity provision
 
-| Contract | Purpose | Experiment |
-|----------|---------|------------|
-| `InvoiceNFT.sol` | ERC-721 invoice tokenization | 1 |
-| `InvoiceVault.sol` | ERC-4626 vault for mUSDC → vINV shares | 4 |
-| `InvoiceFarm.sol` | Stake vINV, earn INVX rewards | 5 |
-| `ReserveStaking.sol` | Stake INVX, earn mUSDC yield + supplier tiers | 5 |
-| `FeeRouter.sol` | 70/20/10 split (Vault/Reserve/Insurance) | 5 |
-| `TierGate.sol` | On-chain tier enforcement, limits, unstake lock | 5 |
-| `InvoiceLiquidityPool.sol` | AMM pool financing (investor deposits) | 6 |
-| `DexFactory/DexRouter/DexPair.sol` | Uniswap v2 DEX for INVX/mUSDC | 6 |
-| `PlatformPriceOracle.sol` | Multi-feed Chainlink oracle (Exp 7) | 7 |
+### Chainlink Price Oracle
+- **Multi-feed oracle** — ETH/USD, BTC/USD, USDC/USD registered in constructor (single deployment)
+- **SafePrice validation** — `answer > 0`, `updatedAt != 0`, `age ≤ maxAge` (heartbeat × 1.25)
+- **Dynamic decimal normalization** — reads `feed.decimals()` at registration, normalizes to 18dp (multiply-before-divide)
+- **On-chain conversions** — `ethToUsd`, `usdToEth`, `valueOf(symbol, amount, decimals)`
+- **Circuit breaker** — `isHealthy(symbol)` non-reverting bool for UI
+- **Owner administration** — `addFeed`, `updateMaxAge` for post-deploy configuration
 
-## 🧪 Experiments Implemented
+### DAO Governance
+- **Binding proposals** — change financing fee (10–1000 bps) or penalize defaulting suppliers
+- **Snapshot voting** — ERC20Votes (DTEST) with flash-loan protection (block.number - 1 snapshots)
+- **Timelock execution** — queue → wait → execute with guardian veto
+- **Whitelisted targets/selectors** — only authorized contracts and functions callable via governance
+- **Sealed permissions** — minting, execution authority, and collateral admin locked after bootstrap
+- **Collateral penalty** — slash INVX from overdue supplier (once per invoice, transfers to treasury)
 
-### Experiment 1: Invoice NFT Tokenization
-- `InvoiceNFT.sol` — ERC-721 with metadata (invoice number, amount, due date, borrower)
-- `mintInvoice`, `financeInvoice`, `repayInvoice` functions
+### Frontend (React 18 + Vite)
+- **Invoice Financing** — Supplier (mint ETH/USD), P2P Marketplace, Pool Financing tabs
+- **Vault Dashboard** — deposit/redeem, 1-click Deposit & Farm, farm harvest/withdraw, staking, DEX swap, conversion calculator
+- **Oracle Health Badge** — header badge (price + age + colored dot), popover with 3-feed status, heartbeats, source indicator
+- **DAO Governance** — create proposals, vote, delegate, queue, execute, view proposal lifecycle
+- **Invoices & Collateral** — deposit INVX, create invoices, finance, simulate default, execute penalty
+- **Real-time data** — 30s polling, freshness states (fresh/aging/stale/unavailable), circuit breaker UI
+- **Wallet support** — MetaMask + WalletConnect, multi-account switching
 
-### Experiment 2: P2P Marketplace
-- Direct supplier ↔ investor financing
-- Marketplace listing with ETH amounts
+---
 
-### Experiment 3: Invoice Vault (ERC-4626)
-- `InvoiceVault.sol` — Standard ERC-4626 implementation
-- `deposit`/`mint`/`withdraw`/`redeem`/`convertToShares`/`convertToAssets`
-- Dynamic decimals support (fetches `asset.decimals()` and `vault.decimals()`)
-
-### Experiment 4: Vault Accounting Fix
-- Share price resilience when funds allocated to invoices
-- Idle cash tracking prevents share dilution
-
-### Experiment 5: Yield Farming + Protocol Staking
-| Component | Function |
-|-----------|----------|
-| `InvoiceFarm` | Stake vINV → earn INVX (utilization-aware emissions) |
-| `ReserveStaking` | Stake INVX → earn mUSDC yield (20% fee share) |
-| `FeeRouter` | Auto-split: 70% Vault, 20% ReserveStaking, 10% Insurance |
-| `TierGate` | Supplier tiers (Bronze/Silver/Gold) → fee discounts + financing caps + unstake lock |
-
-### Experiment 6: DEX Prototype (Uniswap v2)
-- `DexFactory` — Pair creation with `CREATE2` deterministic addresses
-- `DexRouter` — Swaps, multi-hop, add/remove liquidity, slippage guards, deadlines
-- `DexPair` — Constant product AMM, mixed decimals (6 & 18), `k` invariant
-- 11 test scenarios covering all Lab document cases
-
-### Experiment 7: Chainlink Price Oracle ✨ **Latest**
-- `PlatformPriceOracle.sol` — Single deployed contract with:
-  - **Multi-feed support**: ETH/USD, BTC/USD, USDC/USD (configurable via constructor)
-  - **SafePrice checks**: `answer > 0`, `updatedAt != 0`, `age ≤ maxAge` (heartbeat × 1.25)
-  - **Dynamic decimals**: Reads `feed.decimals()` at registration, normalizes to 18dp (multiply-before-divide)
-  - **Conversions**: `ethToUsd`, `usdToEth`, `valueOf(symbol, amount, decimals)`
-  - **Circuit breaker**: `isHealthy(symbol)` non-reverting bool for UI
-  - **Owner config**: `addFeed`, `updateMaxAge`
-- `MockFeed.sol` — Local testing with 8/18 decimals, roundId, answeredInRound
-- **Frontend integration**:
-  - `useOraclePrice` hook (read-only provider, 30s cache, oracle + direct feed fallback)
-  - `OracleHealthBadge` — Header badge + popover with 3-feed health, heartbeats, ages
-  - `InvoiceFinancing` — USD-denominated mint mode (live ETH calc, rate locked at listing), circuit breaker disables USD mode when stale, tier cap advisory (UI-only)
-  - `VaultDashboard` — TVL in USD when USDC/USD healthy
-
-## 🌐 Frontend (React 18 + Vite + Ethers v6)
-
-### Pages/Components
-| Component | Features |
-|-----------|----------|
-| `InvoiceFinancing.jsx` | 3 tabs: Supplier (mint ETH/USD), P2P Marketplace, Pool Financing (deposit/withdraw/request financing/repay) |
-| `VaultDashboard.jsx` | ERC-4626 deposit/redeem, 1-click Deposit & Farm, Farm harvest/withdraw, ReserveStaking stake/unstake/claim, Combined APY, DEX swap card, conversion calculator |
-| `OracleHealthBadge.jsx` | Header badge (price + age + colored dot), popover with 3 feeds (status, price, heartbeat, maxAge, source) |
-| `Navbar.jsx` | Wallet connect (MetaMask/WalletConnect), Oracle badge, auth state |
-
-### Key Features
-- **Multi-tab financing**: P2P, Pool, USD-denominated mint
-- **Real-time oracle data**: 30s polling, freshness status (fresh/aging/stale/unavailable)
-- **Circuit breaker**: Disables USD mint & financing when price stale
-- **Tier advisory**: Warns if invoice USD > supplier tier limit (UI-only)
-- **Dynamic decimals**: All conversions use on-chain `decimals()` reads
-- **WalletConnect + MetaMask** support
-
-## 📁 Project Structure
+## 🏗️ Architecture
 
 ```
-E:\Desktop\CBD minproject\
-├── contracts/
-│   ├── *.sol                    # 17 main contracts + interfaces
-│   └── test/MockFeed.sol        # Local Chainlink mock
-├── test/
-│   ├── Experiment5.test.js      # 12 tests (vault, farm, staking, router, tiergate)
-│   ├── Experiment6.test.js      # 11 tests (DEX scenarios 1-11)
-│   └── Experiment7.test.js      # 14 tests (5 doc cases + 9 extended)
-├── scripts/
-│   ├── deploy_exp5.js           # Deploys Exp 1-5 contracts
-│   ├── deploy_dex.js            # Deploys DEX (factory, router, pair)
-│   ├── deploy_oracle.js         # 5-gate oracle deployment (Exp 7)
-│   ├── preflight.js             # Pre-deployment checks
-│   ├── smoke_test.js            # Post-deploy verification
-│   └── dex_gate_and_deploy.js   # DEX gate checks
-├── deployments/
-│   ├── sepolia.json             # Exp 1-5 deployed addresses
-│   ├── dex-sepolia.json         # DEX deployed addresses
-│   └── oracle-sepolia.json      # (Created after oracle deploy)
-├── warranty-tracker/            # React frontend
-│   ├── src/
-│   │   ├── components/          # InvoiceFinancing, VaultDashboard, OracleHealthBadge, Navbar, DEX, etc.
-│   │   ├── hooks/useOraclePrice.js
-│   │   ├── config/              # All contract ABIs + addresses + oracle config
-│   │   ├── context/WalletContext.jsx
-│   │   └── pages/Login.jsx, SignUp.jsx
-│   └── dist/                    # Production build
-└── docs/
-    ├── EXPERIMENT5_DOCUMENTATION.md
-    └── EXPERIMENT5_EVIDENCE.md
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        INVOICE FINANCING PLATFORM                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐     │
+│  │  Smart Contracts │    │    Frontend      │    │   Networks       │     │
+│  │  (Solidity)      │    │  (React + Vite)  │    │                  │     │
+│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘     │
+│           │                       │                       │               │
+│  ┌────────┴─────────┐    ┌────────┴─────────┐    ┌────────┴─────────┐     │
+│  │ • InvoiceNFT     │    │ • InvoiceFinancing│    │ • Sepolia: 8     │     │
+│  │ • InvoiceVault   │    │   (3 tabs)       │    │   core contracts │     │
+│  │   (ERC-4626)     │    │ • VaultDashboard │    │ • DEX: factory,  │     │
+│  │ • InvoiceFarm    │    │ • OracleHealth   │    │   router, pair   │     │
+│  │ • ReserveStaking │    │   Badge          │    │ • Oracle:        │     │
+│  │ • FeeRouter      │    │ • DAO Governance │    │   PlatformPrice  │     │
+│  │ • TierGate       │    │   (proposals,    │    │ • Localhost:     │     │
+│  │ • DEX Factory/   │    │   voting, delegate)│  │   DAO workspace  │     │
+│  │   Router/Pair    │    │ • Invoices &     │    │   (7 contracts)  │     │
+│  │ • PlatformPrice  │    │   Collateral     │    │                  │     │
+│  │   Oracle         │    │ • WalletConnect  │    │                  │     │
+│  │ • DTEST,         │    │   + MetaMask     │    │                  │     │
+│  │   Governance,    │    │                   │    │                  │     │
+│  │   PlatformConfig │    │                   │    │                  │     │
+│  └──────────────────┘    └──────────────────┘    └──────────────────┘     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 📦 Core Contracts
+
+| Contract | Purpose |
+|----------|---------|
+| `InvoiceNFT.sol` | ERC-721 invoice tokenization with financing/repayment logic |
+| `InvoiceVault.sol` | ERC-4626 vault (mUSDC → vINV shares) |
+| `InvoiceFarm.sol` | Stake vINV → earn INVX (utilization-aware emissions) |
+| `ReserveStaking.sol` | Stake INVX → earn mUSDC yield + supplier tiers |
+| `FeeRouter.sol` | 70/20/10 automated fee split (Vault/Reserve/Insurance) |
+| `TierGate.sol` | On-chain tier enforcement, limits, unstake lock |
+| `InvoiceLiquidityPool.sol` | AMM pool financing for investor deposits |
+| `DexFactory/DexRouter/DexPair.sol` | Uniswap v2 DEX (INVX/mUSDC) |
+| `PlatformPriceOracle.sol` | Multi-feed Chainlink oracle (ETH/BTC/USDC-USD) |
+| `DTEST.sol` | ERC20Votes governance token with faucet + delegation |
+| `Governance.sol` | DAO core (proposals, voting, timelock, whitelists) |
+| `PlatformConfig.sol` | DAO-executable fee changes & collateral penalties |
+
+---
+
+## 🌐 Deployment Status
+
+### Sepolia (Live)
+| Contract | Address |
+|----------|---------|
+| InvoiceVault | `0x81289DBECab824C8db0d5193e2D6a8d8276A1456` |
+| INVX | `0xc2b51d72E701013F2107F77a7eDFB74735332739` |
+| ReserveStaking | `0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24` |
+| InvoiceFarm | `0x5a2268E7e3ae8E83190422d508237f3A6fBEfa78` |
+| FeeRouter | `0x1cBABbD581f4fe4566B22a21CF33D35e17b8b268` |
+| TierGate | `0x6136516ce353dbAa62B1c1B63F6b41b502D6cCc8` |
+| DexFactory | `0x17e54a6428dCf74fDA543DcDbf3949762836Fa8b` |
+| DexRouter | `0xAd1D256C1dd832485e11e014141b80ADDcf41440` |
+| INVX/mUSDC Pair | `0x2Fe73871303b16A11FA0fd75DFB8306CAFb2BE48` |
+| **PlatformPriceOracle** | `0x6a6f2d0B3Fe78da7bC2b2749AB76663e2A934004` |
+
+### Localhost (DAO Workspace)
+Run `npm run node:local` then `npm run deploy:gov` to deploy 7 governance contracts locally with seeded accounts (Alice/Bob/Charlie).
+
+---
+
+## 🧪 Testing
+
+```bash
+# All tests (89 passing)
+npx hardhat test
+
+# Breakdown:
+# - Experiments 1-7: 34 tests
+# - DAO Governance: 35 tests  
+# - Security (flash-loan, snapshot): 10 tests
+# - Regression/integration: 10 tests
+```
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node 18+
 - Git
-- Sepolia ETH (for deployment)
 
-### Local Development
-
+### Local Development (Full Stack)
 ```bash
 # 1. Install dependencies
-cd "E:\Desktop\CBD minproject"
+cd invoice-financing-platform
 npm install
+cd warranty-tracker && npm install && cd ..
 
-cd warranty-tracker
-npm install
+# 2. Start local Hardhat node (terminal 1)
+npm run node:local
+# → http://127.0.0.1:8545 (Chain ID 31337)
 
-# 2. Run local Hardhat node (terminal 1)
-cd ..
-npx hardhat node
-
-# 3. Deploy contracts locally (terminal 2)
-npx hardhat run scripts/deploy_exp5.js --network hardhat
-npx hardhat run scripts/deploy_dex.js --network hardhat
-# Oracle deploys on fork (no local deploy needed)
+# 3. Deploy DAO workspace (terminal 2)
+npm run deploy:gov
+# Deploys 7 governance contracts + seeds Alice/Bob/Charlie
 
 # 4. Start frontend (terminal 3)
-cd warranty-tracker
-npm run dev
-# → http://localhost:5173
+cd warranty-tracker && npm run dev -- --host 127.0.0.1
+# → http://127.0.0.1:5174
 ```
 
-### Run Tests
+### Sepolia Development (Experiments 1-7)
 ```bash
-cd "E:\Desktop\CBD minproject"
-npx hardhat test
-# 34 tests passing (Exp 5: 12, Exp 6: 11, Exp 7: 14)
-```
+# Deploy core contracts
+npx hardhat run scripts/deploy_exp5.js --network sepolia
+npx hardhat run scripts/deploy_dex.js --network sepolia
 
-## 📡 Sepolia Deployment Status
-
-| Contract | Address | Explorer |
-|----------|---------|----------|
-| InvoiceVault | `0x81289DBECab824C8db0d5193e2D6a8d8276A1456` | [Etherscan](https://sepolia.etherscan.io/address/0x81289DBECab824C8db0d5193e2D6a8d8276A1456) |
-| INVX | `0xc2b51d72E701013F2107F77a7eDFB74735332739` | [Etherscan](https://sepolia.etherscan.io/address/0xc2b51d72E701013F2107F77a7eDFB74735332739) |
-| ReserveStaking | `0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24` | [Etherscan](https://sepolia.etherscan.io/address/0xfd26E9E48a0AF8c695db86667203f9f0aaAbAC24) |
-| InvoiceFarm | `0x5a2268E7e3ae8E83190422d508237f3A6fBEfa78` | [Etherscan](https://sepolia.etherscan.io/address/0x5a2268E7e3ae8E83190422d508237f3A6fBEfa78) |
-| FeeRouter | `0x1cBABbD581f4fe4566B22a21CF33D35e17b8b268` | [Etherscan](https://sepolia.etherscan.io/address/0x1cBABbD581f4fe4566B22a21CF33D35e17b8b268) |
-| TierGate | `0x6136516ce353dbAa62B1c1B63F6b41b502D6cCc8` | [Etherscan](https://sepolia.etherscan.io/address/0x6136516ce353dbAa62B1c1B63F6b41b502D6cCc8) |
-| DexFactory | `0x17e54a6428dCf74fDA543DcDbf3949762836Fa8b` | [Etherscan](https://sepolia.etherscan.io/address/0x17e54a6428dCf74fDA543DcDbf3949762836Fa8b) |
-| DexRouter | `0xAd1D256C1dd832485e11e014141b80ADDcf41440` | [Etherscan](https://sepolia.etherscan.io/address/0xAd1D256C1dd832485e11e014141b80ADDcf41440) |
-| Pair INVX/mUSDC | `0x2Fe73871303b16A11FA0fd75DFB8306CAFb2BE48` | [Etherscan](https://sepolia.etherscan.io/address/0x2Fe73871303b16A11FA0fd75DFB8306CAFb2BE48) |
-| **PlatformPriceOracle** | **PENDING** (needs 0.012 ETH) | — |
-
-### Deploy Oracle (Experiment 7)
-```bash
-# 1. Fund deployer: 0x6e5e55388fA5fde92293FC17F15cf5d89daF5755 with ≥0.012 Sepolia ETH
-# 2. Run deployment (single command, 5 gates):
+# Deploy oracle (5-gate script)
 npx hardhat run scripts/deploy_oracle.js --network sepolia
-
-# 3. Rebuild frontend with real oracle address
-cd warranty-tracker && npm run build
 ```
 
-**Deployer:** `0x6e5e55388fA5fde92293FC17F15cf5d89daF5755`  
-**Estimated cost:** ~0.012 ETH (9.6M gas × 1 gwei × 1.25 buffer)
+### MetaMask Setup (Local)
+| Field | Value |
+|-------|-------|
+| Network | DeFiSpace Local |
+| RPC | http://127.0.0.1:8545 |
+| Chain ID | 31337 |
+| Symbol | ETH |
 
-### Oracle Feeds (Verified on data.chain.link)
-| Feed | Address | Heartbeat | MaxAge | Decimals |
-|------|---------|-----------|--------|----------|
-| ETH/USD | `0x694AA1769357215DE4FAC081bf1f309aDC325306` | 3600s | 4500s | 8 |
-| BTC/USD | `0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43` | 3600s | 4500s | 8 |
-| USDC/USD | `0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E` | 86400s | 108000s | 8 |
+**Demo Accounts** (import private keys from `npm run node:local` output):
+- Alice (Account #1) — 50,000 DTEST, 2,000 INVX — proposer/borrower
+- Bob (Account #2) — 20,000 DTEST, 2,000 INVX — voter/investor  
+- Charlie (Account #3) — 20,000 DTEST, 2,000 INVX — voter
 
-## 📋 What's Complete vs Remaining
+---
 
-### ✅ Complete (Experiments 1-7)
-- [x] All 17 smart contracts written, compiled, tested
-- [x] 8 contracts deployed to Sepolia (Exp 1-6)
-- [x] DEX deployed and verified (factory, router, INVX/mUSDC pair)
-- [x] All 34 Hardhat tests passing
-- [x] React frontend with all features:
-  - Invoice financing (P2P + Pool + USD mode)
-  - Vault dashboard (deposit, farm, stake, DEX swap)
-  - Oracle health badge + popover
-  - USD-denominated mint with live conversion
-  - Circuit breaker + tier advisory
-  - WalletConnect + MetaMask
-- [x] 5-gate oracle deployment script (ready to run)
-- [x] Frontend builds successfully (`npm run build`)
-- [x] Deployment records in `deployments/*.json`
-
-### ⏳ Remaining / To Do
-- [ ] **Deploy PlatformPriceOracle to Sepolia** (fund deployer with 0.012 ETH)
-- [ ] Deploy `InvoiceLiquidityPool.sol` to Sepolia (for pool financing tab)
-- [ ] Update `POOL_CONTRACT_ADDRESS` in `InvoiceFinancing.jsx` after pool deploy
-- [ ] E2E Playwright tests for frontend (multi-viewport)
-- [ ] Render deployment configuration (if hosting frontend)
-- [ ] Optional: Add more Chainlink feeds (LINK/USD, ARB/USD, etc.)
-- [ ] Optional: On-chain oracle consumption (e.g., TierGate uses oracle for USD limits)
-
-## 🔧 Configuration Files
+## ⚙️ Configuration
 
 | File | Purpose |
 |------|---------|
-| `hardhat.config.js` | Solidity 0.8.24, optimizer, Sepolia network |
-| `warranty-tracker/src/config/oracleConfig.js` | Oracle address, feed addresses, ABIs |
-| `warranty-tracker/src/config/contractConfig.js` | Core contract addresses |
+| `hardhat.config.js` | Solidity 0.8.24, optimizer, networks |
+| `.env` | PRIVATE_KEY, SEPOLIA_RPC_URL, ETHERSCAN_API_KEY |
+| `warranty-tracker/src/config/oracleConfig.js` | Oracle address, feed configs, ABIs |
+| `warranty-tracker/src/config/governanceConfig.js` | DAO contract addresses (local/sepolia) |
+| `warranty-tracker/src/config/contractConfig.js` | Core Sepolia contract addresses |
 | `warranty-tracker/src/config/farmConfig.js` | Farm, staking, INVX addresses |
 | `warranty-tracker/src/config/dexConfig.js` | DEX factory, router addresses |
-| `.env` | PRIVATE_KEY, SEPOLIA_RPC_URL, ETHERSCAN_API_KEY |
+
+---
+
+## 📋 Key Features Summary
+
+**Invoice Financing**
+- ✅ NFT tokenization with metadata
+- ✅ P2P direct financing
+- ✅ Shared liquidity pool (AMM)
+- ✅ USD-denominated minting (live oracle conversion)
+- ✅ Circuit breaker (disables USD/financing when price stale)
+- ✅ Tier-based fee discounts & caps (on-chain)
+
+**Vault & Yield**
+- ✅ ERC-4626 standard compliance
+- ✅ Dynamic decimals support
+- ✅ Share price protection
+- ✅ vINV farming → INVX rewards
+- ✅ INVX staking → mUSDC yield
+- ✅ Automated 70/20/10 fee routing
+
+**DEX**
+- ✅ Uniswap v2 AMM (factory/router/pair)
+- ✅ CREATE2 deterministic pairs
+- ✅ Multi-hop swaps
+- ✅ Slippage guards, deadlines
+- ✅ Mixed decimal precision
+
+**Oracle**
+- ✅ Multi-feed (ETH/BTC/USDC-USD)
+- ✅ SafePrice 3-check validation
+- ✅ Dynamic 18dp normalization
+- ✅ ethToUsd / usdToEth / valueOf
+- ✅ isHealthy circuit breaker
+- ✅ Owner feed management
+
+**Governance**
+- ✅ Fee change proposals (10–1000 bps)
+- ✅ Collateral penalty proposals
+- ✅ ERC20Votes snapshot voting
+- ✅ Flash-loan resistant snapshots
+- ✅ Timelock + guardian veto
+- ✅ Whitelisted targets/selectors
+- ✅ Sealed permissions post-bootstrap
+
+**Frontend**
+- ✅ Multi-tab invoice financing
+- ✅ Vault dashboard (deposit, farm, stake, swap)
+- ✅ Oracle health badge + popover
+- ✅ DAO governance (create, vote, delegate, execute)
+- ✅ Invoices & collateral management
+- ✅ Real-time polling + circuit breaker UI
+- ✅ MetaMask + WalletConnect
+
+---
 
 ## 📜 License
 
-MIT — Built as a progressive DeFi learning platform through 7 experiments.
+MIT — A progressive DeFi platform demonstrating invoice financing, vault yield, DEX liquidity, oracle integration, and DAO governance.
